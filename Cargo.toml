@@ -8,5 +8,8 @@ edition = "2021"
 [dependencies]
 nalgebra = "0.31.1"
 libm = "0.2.5"
+error-stack = "0.2.2"
+serde = {version ="1.0.145",features = ["derive"]}
 serde_json = "1.0.86"
-serde = { version = "1.0.145", features = ["derive"] }
+log = "0.4.17"
+env_logger = "0.9.0"

@@ -1,7 +1,7 @@
 #[macro_use]
 extern crate nalgebra as na;
 mod inverse_kinematics;
-
+mod serialization;
 use na::{Vector3, Rotation3};
 fn main() {
     let axis  = Vector3::x_axis();
@@ -14,4 +14,6 @@ fn main() {
     let t5=Vector3::new(2.5, 2.5, 0.0);
     let v = inverse_kinematics::inverse_kinematics::simple_ik(t2);
     print!("{:?}",v);
+    _ = serialization::serialization::deserialize_into_struct();
+    _ = serialization::serialization::serialize_from_struct();
 }
