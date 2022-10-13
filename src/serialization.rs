@@ -1,5 +1,5 @@
-pub mod serialization{
-    use std::{fmt, error::Error};
+pub mod serde_helpers{
+use std::{fmt, error::Error};
 use error_stack::{IntoReport, ResultExt};
 use serde::{Deserialize, Serialize};
 
@@ -58,4 +58,37 @@ pub fn deserialize_into_struct()  -> error_stack::Result<TimedCoordinates,ParseC
     Ok(p)
 
 }
+}
+
+pub mod db_abstraction{
+
+use std::{fmt, error::Error};
+use error_stack::{IntoReport, ResultExt};
+
+#[derive(Debug)]
+pub struct DBTransactionError;
+
+impl fmt::Display for DBTransactionError {
+    fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt.write_str("Could not parse configuration file")
+    }
+}
+
+//impl Context for ParseConfigError {}
+impl Error for DBTransactionError {}
+
+
+    use super::serde_helpers::TimedCoordinates;
+
+    pub fn connect_db() -> (){
+todo!()
+    }
+
+    pub fn add_constellation(cst:TimedCoordinates,next_cst:i32) -> error_stack::Result<TimedCoordinates,DBTransactionError>{
+todo!()
+    }
+
+    pub fn get_constellation(id:i32)->error_stack::Result<TimedCoordinates,DBTransactionError>{
+todo!()
+    }
 }
