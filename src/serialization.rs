@@ -34,12 +34,8 @@ pub fn serialize_from_struct()  -> error_stack::Result<String,ParseConfigError>{
     };
 
         // Serialize it to a JSON string.
-        // Serialize it to a JSON string.
         let j = serde_json::to_string(&address).into_report().change_context(ParseConfigError)?;
-
-        // Print, write to a file, or send to an HTTP server.
-        println!("Serialized into string: {}", j);
-        Ok((j))
+        Ok(j)
 
 }
 

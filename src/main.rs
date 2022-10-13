@@ -2,18 +2,108 @@
 extern crate nalgebra as na;
 mod inverse_kinematics;
 mod serialization;
-use na::{Vector3, Rotation3};
-fn main() {
-    let axis  = Vector3::x_axis();
-    let angle = 1.57;
-    let b     = Rotation3::from_axis_angle(&axis, angle);
-    let t1=Vector3::new(0.0, 0.0, 0.0);
-    let t2=Vector3::new(5.0, 5.0, 5.0);
-    let t3=Vector3::new(0.0, 5.0, 0.0);
-    let t4=Vector3::new(5.0, 0.0, 0.0);
-    let t5=Vector3::new(2.5, 2.5, 0.0);
-    let v = inverse_kinematics::inverse_kinematics::simple_ik(t2);
-    print!("{:?}",v);
-    _ = serialization::serialization::deserialize_into_struct();
-    _ = serialization::serialization::serialize_from_struct();
+use na::{Vector3};
+use sqlx::sqlite::SqlitePool;
+use std::env;
+use structopt::StructOpt;
+
+#[derive(StructOpt)]
+struct Args {
+    #[structopt(subcommand)]
+    cmd: Option<Command>,
+}
+
+#[derive(StructOpt)]
+enum Command {
+    Add { description: String },
+    Done { id: i64 },
+}
+
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
+        let t2=Vector3::new(5.0, 5.0, 5.0);
+        let v = inverse_kinematics::inverse_kinematics::simple_ik(t2);
+        _ = serialization::serialization::deserialize_into_struct();
+        _ = serialization::serialization::serialize_from_struct();
+    let args = Args::from_args_safe()?;
+    let pool = SqlitePool::connect(&env::var("DATABASE_URL")?).await?;
+
+    match args.cmd {
+        Some(Command::Add { description }) => {
+            println!("Adding new todo with description '{}'", &description);
+            let todo_id = add_todo(&pool, description).await?;
+            println!("Added new todo with id {}", todo_id);
+        }
+        Some(Command::Done { id }) => {
+            println!("Marking todo {} as done", id);
+            if complete_todo(&pool, id).await? {
+                println!("Todo {} is marked as done", id);
+            } else {
+                println!("Invalid id {}", id);
+            }
+        }
+        None => {
+            println!("Printing list of all todos");
+            list_todos(&pool).await?;
+        }
+    }
+
+    Ok(())
+}
+
+async fn add_todo(pool: &SqlitePool, description: String) -> anyhow::Result<i64> {
+    let mut conn = pool.acquire().await?;
+
+    // Insert the task, then obtain the ID of this row
+    let id = sqlx::query!(
+        r#"
+INSERT INTO todos ( description )
+VALUES ( ?1 )
+        "#,
+        description
+    )
+    .execute(&mut conn)
+    .await?
+    .last_insert_rowid();
+
+    Ok(id)
+}
+
+async fn complete_todo(pool: &SqlitePool, id: i64) -> anyhow::Result<bool> {
+    let rows_affected = sqlx::query!(
+        r#"
+UPDATE todos
+SET done = TRUE
+WHERE id = ?1
+        "#,
+        id
+    )
+    .execute(pool)
+    .await?
+    .rows_affected();
+
+    Ok(rows_affected > 0)
+}
+
+async fn list_todos(pool: &SqlitePool) -> anyhow::Result<()> {
+    let recs = sqlx::query!(
+        r#"
+SELECT id, description, done
+FROM todos
+ORDER BY id
+        "#
+    )
+    .fetch_all(pool)
+    .await?;
+
+    for rec in recs {
+        println!(
+            "- [{}] {}: {}",
+            if rec.done { "x" } else { " " },
+            rec.id,
+            &rec.description,
+        );
+    }
+
+    Ok(())
 }
