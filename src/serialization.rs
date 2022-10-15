@@ -1,94 +1,130 @@
-pub mod serde_helpers{
-use std::{fmt, error::Error};
-use error_stack::{IntoReport, ResultExt};
-use serde::{Deserialize, Serialize};
+pub mod serde_helpers {
+    use error_stack::{IntoReport, ResultExt};
+    use serde::{Deserialize, Serialize};
+    use std::{error::Error, fmt};
 
-#[derive(Debug)]
-pub struct ParseConfigError;
+    #[derive(Debug)]
+    pub struct ParseConfigError;
 
-impl fmt::Display for ParseConfigError {
-    fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
-        fmt.write_str("Could not parse configuration file")
+    impl fmt::Display for ParseConfigError {
+        fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
+            fmt.write_str("Could not parse configuration file")
+        }
     }
-}
 
-//impl Context for ParseConfigError {}
-impl Error for ParseConfigError {}
+    //impl Context for ParseConfigError {}
+    impl Error for ParseConfigError {}
 
-#[derive(Serialize, Deserialize)]
-pub struct TimedCoordinates {
-    name: String,
-    timestamp: u8,
-    vector: Vec<u32>,
-    rotation: Vec<u32>,
+    pub struct TimedCoordinates {
+        pub name: String,
+        pub timestamp: u8,
+        pub vector: Vec<u32>,
+        pub rotation: Vec<u32>,
+    }
 
-}
+    #[derive(Serialize, Deserialize)]
+    pub struct SerdeVector {
+        vectors: Vec<u32>,
+    }
 
-pub fn serialize_from_struct()  -> error_stack::Result<String,ParseConfigError>{
+    #[derive(Serialize, Deserialize)]
+    pub struct SerdeRotations {
+        rotations: Vec<u32>,
+    }
 
-    let address = TimedCoordinates {
-        name: "todo".to_string(),
-        timestamp: 10,
-        vector: [1,2,3].to_vec(),
-        rotation: [10,20,30].to_vec(),
-    };
-
-        // Serialize it to a JSON string.
-        let j = serde_json::to_string(&address).into_report().change_context(ParseConfigError)?;
+    pub fn serialize_vector(v: SerdeVector) -> error_stack::Result<String, ParseConfigError> {
+        let j = serde_json::to_string(&v)
+            .into_report()
+            .change_context(ParseConfigError)?;
         Ok(j)
+    }
 
-}
+    pub fn serialize_rotations(r: SerdeRotations) -> error_stack::Result<String, ParseConfigError> {
+        let j = serde_json::to_string(&r)
+            .into_report()
+            .change_context(ParseConfigError)?;
+        Ok(j)
+    }
 
-pub fn deserialize_into_struct()  -> error_stack::Result<TimedCoordinates,ParseConfigError>{
-        // Some JSON input data as a &str. Maybe this comes from the user.
-        let data = r#"
-        {
-            "name": "John Doe",
-            "timestamp": 43,
-            "vector": [
-                441234567,
-                442345678
-            ],
-            "rotation": [
-                551234567,
-                552345678
-            ]
-        }"#;
-    let p: TimedCoordinates = serde_json::from_str(data).into_report().change_context(ParseConfigError)?;
-    Ok(p)
+    pub fn deserialize_vector(data: &str) -> error_stack::Result<Vec<u32>, ParseConfigError> {
+        let p: Vec<u32> = serde_json::from_str(data)
+            .into_report()
+            .change_context(ParseConfigError)?;
+        Ok(p)
+    }
 
-}
-}
-
-pub mod db_abstraction{
-
-use std::{fmt, error::Error};
-use error_stack::{IntoReport, ResultExt};
-
-#[derive(Debug)]
-pub struct DBTransactionError;
-
-impl fmt::Display for DBTransactionError {
-    fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
-        fmt.write_str("Could not parse configuration file")
+    pub fn deserialize_rotations(data: &str) -> error_stack::Result<Vec<u32>, ParseConfigError> {
+        let p: Vec<u32> = serde_json::from_str(data)
+            .into_report()
+            .change_context(ParseConfigError)?;
+        Ok(p)
     }
 }
 
-//impl Context for ParseConfigError {}
-impl Error for DBTransactionError {}
+pub mod db_abstraction {
 
+    use error_stack::{IntoReport, ResultExt};
+    use sqlx::sqlite::SqlitePool;
+    use std::{error::Error, fmt};
+    #[derive(Debug)]
+    pub struct DBTransactionError;
 
-    use super::serde_helpers::TimedCoordinates;
-
-    pub fn connect_db() -> (){
-todo!()
+    impl fmt::Display for DBTransactionError {
+        fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
+            fmt.write_str("Could not parse configuration file")
+        }
     }
 
-    pub fn add_constellation(cst:TimedCoordinates,next_cst:i32) -> error_stack::Result<TimedCoordinates,DBTransactionError>{
-todo!()
+    //impl Context for ParseConfigError {}
+    impl Error for DBTransactionError {}
+
+    use super::serde_helpers::*;
+
+    pub fn connect_db() -> () {
+        todo!()
     }
 
-    pub fn get_constellation(id:i32)->error_stack::Result<TimedCoordinates,DBTransactionError>{
-todo!()
+    pub async fn add_constellation(
+        pool: &SqlitePool,
+        v: SerdeVector,
+        r: SerdeRotations,
+        next_cst: i32,
+        alias: String,
+    ) -> error_stack::Result<String, DBTransactionError> {
+        let mut conn = pool
+            .acquire()
+            .await
+            .into_report()
+            .change_context(DBTransactionError)?;
+
+        let vector = serialize_vector(v)
+            .change_context(DBTransactionError)
+            .attach_printable(format!("vector could not be parsed."))?;
+
+        let rotation = serialize_rotations(r)
+            .change_context(DBTransactionError)
+            .attach_printable(format!("roation could not be parsed."))?;
+
+        // Insert the task, then obtain the ID of this row
+        let id = sqlx::query!(
+            r#"
+    INSERT INTO nodes ( alias,vectors,rotations,following_node)
+    VALUES ( ?1,?2,?3,?4 )
+            "#,
+            "name",
+            vector,
+            rotation,
+            1,
+        )
+        .execute(&mut conn)
+        .await
+        .into_report()
+        .change_context(DBTransactionError)?;
+        Ok(alias)
+    }
+    //.last_insert_rowid();
+
+    pub fn get_constellation(id: i32) -> error_stack::Result<TimedCoordinates, DBTransactionError> {
+        todo!()
     }
 }

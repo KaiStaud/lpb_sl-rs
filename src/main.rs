@@ -1,8 +1,6 @@
-#[macro_use]
 extern crate nalgebra as na;
 mod inverse_kinematics;
 mod serialization;
-mod storage;
 use na::{Vector3};
 use sqlx::sqlite::SqlitePool;
 use std::env;
@@ -17,32 +15,22 @@ struct Args {
 #[derive(StructOpt)]
 enum Command {
     Add { description: String },
-    Done { id: i64 },
 }
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
         let t2=Vector3::new(5.0, 5.0, 5.0);
         let v = inverse_kinematics::inverse_kinematics::simple_ik(t2);
-        _ = serialization::serde_helpers::deserialize_into_struct();
-        _ = serialization::serde_helpers::serialize_from_struct();
-    let args = Args::from_args_safe()?;
+     let args = Args::from_args_safe()?;
     let pool = SqlitePool::connect(&env::var("DATABASE_URL")?).await?;
 
     match args.cmd {
         Some(Command::Add { description }) => {
             println!("Adding new todo with description '{}'", &description);
-            let todo_id = add_todo(&pool, description).await?;
+            let todo_id = add_todo(&pool, "Test".to_string(),"1".to_string(),"2".to_string()).await?;
             println!("Added new todo with id {}", todo_id);
         }
-        Some(Command::Done { id }) => {
-            println!("Marking todo {} as done", id);
-            if complete_todo(&pool, id).await? {
-                println!("Todo {} is marked as done", id);
-            } else {
-                println!("Invalid id {}", id);
-            }
-        }
+
         None => {
             println!("Printing list of all todos");
             list_todos(&pool).await?;
@@ -52,16 +40,19 @@ async fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
-async fn add_todo(pool: &SqlitePool, description: String) -> anyhow::Result<i64> {
+async fn add_todo(pool: &SqlitePool, alias: String,vector:String,rotations:String) -> anyhow::Result<i64> {
     let mut conn = pool.acquire().await?;
 
     // Insert the task, then obtain the ID of this row
     let id = sqlx::query!(
         r#"
-INSERT INTO todos ( description )
-VALUES ( ?1 )
+INSERT INTO nodes ( alias,vectors,rotations,following_node)
+VALUES ( ?1,?2,?3,?4 )
         "#,
-        description
+        alias,
+        vector,
+        rotations,
+        1,
     )
     .execute(&mut conn)
     .await?
@@ -70,27 +61,11 @@ VALUES ( ?1 )
     Ok(id)
 }
 
-async fn complete_todo(pool: &SqlitePool, id: i64) -> anyhow::Result<bool> {
-    let rows_affected = sqlx::query!(
-        r#"
-UPDATE todos
-SET done = TRUE
-WHERE id = ?1
-        "#,
-        id
-    )
-    .execute(pool)
-    .await?
-    .rows_affected();
-
-    Ok(rows_affected > 0)
-}
-
 async fn list_todos(pool: &SqlitePool) -> anyhow::Result<()> {
     let recs = sqlx::query!(
         r#"
-SELECT id, description, done
-FROM todos
+SELECT id, alias, vectors, rotations
+FROM nodes
 ORDER BY id
         "#
     )
@@ -99,12 +74,12 @@ ORDER BY id
 
     for rec in recs {
         println!(
-            "- [{}] {}: {}",
-            if rec.done { "x" } else { " " },
+            "- [{}] {} {} {}",
             rec.id,
-            &rec.description,
+            &rec.alias,
+            &rec.vectors,
+            &rec.rotations,
         );
     }
-
     Ok(())
 }

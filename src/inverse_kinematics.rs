@@ -3,7 +3,6 @@
 pub mod inverse_kinematics{
     extern crate nalgebra as na;
     extern crate libm;
-    use std::f32::consts::PI;
 
     use na::{Vector3};
     use libm::{sin,cos,atan,pow,sqrt};
