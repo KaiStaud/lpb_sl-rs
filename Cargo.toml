@@ -18,3 +18,8 @@ futures = "0.3"
 sqlx = { version = "0.5", features = ["sqlite", "runtime-tokio-native-tls"] }
 structopt = "0.3"
 tokio = { version = "1.20.0", features = ["macros"]}
+lcd-pcf8574 = "0.2.0"
+gpio-cdev = {version = "0.5.1", features = ["async-tokio"]}
+dotenv = "0.15.0"
+i2cdev = "0.5.0"
+lcd = "0.4.1"

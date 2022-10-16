@@ -1,11 +1,14 @@
 extern crate nalgebra as na;
 mod inverse_kinematics;
 mod serialization;
+mod encoder_interface;
+mod front_display;
+use front_display::{lcd_setup};
+use encoder_interface::{setup_encoder};
 use na::{Vector3};
 use sqlx::sqlite::SqlitePool;
 use std::env;
 use structopt::StructOpt;
-
 #[derive(StructOpt)]
 struct Args {
     #[structopt(subcommand)]
@@ -21,7 +24,11 @@ enum Command {
 async fn main() -> anyhow::Result<()> {
         let t2=Vector3::new(5.0, 5.0, 5.0);
         let v = inverse_kinematics::inverse_kinematics::simple_ik(t2);
-     let args = Args::from_args_safe()?;
+        lcd_setup();
+        if let Err(report) = setup_encoder().await{
+
+        }
+        let args = Args::from_args_safe()?;
     let pool = SqlitePool::connect(&env::var("DATABASE_URL")?).await?;
 
     match args.cmd {
