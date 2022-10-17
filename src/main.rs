@@ -3,6 +3,8 @@ mod inverse_kinematics;
 mod serialization;
 mod encoder_interface;
 mod front_display;
+mod state_server;
+use state_server::*;
 use front_display::{lcd_setup};
 use encoder_interface::{setup_encoder};
 use na::{Vector3};
@@ -22,6 +24,34 @@ enum Command {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
+
+    // The `<StateA>` is implied here. We don't need to add type annotations!
+    let in_state_a = StateMachine::new("Booting up...".into());
+
+    // This is okay here. But later once we've changed state it won't work anymore.
+    in_state_a.some_unrelated_value;
+    println!("Starting Value: {}", in_state_a.state.start_value);
+
+
+    // Transition to the new state. This consumes the old state.
+    // Here we need type annotations (since not all StateMachines are linear in their state).
+    let in_state_b = StateMachine::<PreOperational>::from(in_state_a);
+
+    // This doesn't work! The value is moved when we transition!
+    // in_state_a.some_unrelated_value;
+    // Instead, we can use the existing value.
+    in_state_b.some_unrelated_value;
+
+    println!("Interm Value: {:?}", in_state_b.state.interm_value);
+
+    // And our final state.
+    let in_state_c = StateMachine::<Operational>::from(in_state_b);
+
+    // This doesn't work either! The state doesn't even contain this value.
+    // in_state_c.state.start_value;
+
+    println!("Final state: {}", in_state_c.state.final_value);
+
         let t2=Vector3::new(5.0, 5.0, 5.0);
         let v = inverse_kinematics::inverse_kinematics::simple_ik(t2);
         lcd_setup();
