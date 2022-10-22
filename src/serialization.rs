@@ -59,6 +59,28 @@ pub mod serde_helpers {
             .change_context(ParseConfigError)?;
         Ok(p)
     }
+
+    #[derive(Serialize, Deserialize, Debug)]
+    pub struct CheckboxConfig {
+        pub checkbox_enabled: Vec<bool>,
+        pub checkbox_types: Vec<String>,
+        pub checkbox_vector: Vec<u32>,
+        pub checkbox_rotation: Vec<u32>,
+    }
+
+    pub fn deserialize_into_config(
+        path: &str,
+    ) -> error_stack::Result<CheckboxConfig, ParseConfigError> {
+        use std::fs;
+        let contents = fs::read_to_string(path)
+            .into_report()
+            .change_context(ParseConfigError)?;
+        println!("Read from file:{contents}");
+        let p: CheckboxConfig = serde_json::from_str(&contents)
+            .into_report()
+            .change_context(ParseConfigError)?;
+        Ok(p)
+    }
 }
 
 pub mod db_abstraction {

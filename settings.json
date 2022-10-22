@@ -1,0 +1,14 @@
+{
+    "checkbox_enabled": [true,true,true],
+    "checkbox_types":["custom","generic"],
+    "checkbox_vector": [
+        4,
+        44,
+        444
+    ],
+    "checkbox_rotation": [
+        5,
+        55,
+        555
+    ]
+}
