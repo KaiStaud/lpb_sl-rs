@@ -4,7 +4,9 @@ mod encoder_interface;
 mod front_display;
 mod inverse_kinematics;
 mod serialization;
+mod ssd1306_driver;
 mod state_server;
+
 use encoder_interface::setup_encoder;
 use front_display::lcd_setup;
 use na::Vector3;
@@ -44,7 +46,7 @@ async fn main() -> anyhow::Result<()> {
     let v = inverse_kinematics::inverse_kinematics::simple_ik(t2);
     lcd_setup();
     if let Err(report) = setup_encoder().await {}
-    let args = Args::from_args_safe()?;
+    //let args = Args::from_args_safe()?;
     let pool = SqlitePool::connect(&env::var("DATABASE_URL")?).await?;
 
     /*
