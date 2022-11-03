@@ -16,7 +16,6 @@ impl fmt::Display for DataRingError {
     }
 }
 
-//impl Context for DataRingError {}
 impl Error for DataRingError {}
 struct SubRing<T> {
     generic_ring: AllocRingBuffer<T>,
@@ -117,3 +116,13 @@ impl RingManager {
         }
     }
 }
+
+#[cfg(test)]
+#[test]
+fn test_push_into_empty_rings() {}
+
+#[test]
+fn test_overpush_ring() {}
+
+#[test]
+fn test_overpull_ring() {}

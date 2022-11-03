@@ -49,6 +49,11 @@ async fn main() -> anyhow::Result<()> {
     //let args = Args::from_args_safe()?;
     let pool = SqlitePool::connect(&env::var("DATABASE_URL")?).await?;
 
+    let dev = ssd1306_driver::Ssd1306Driver::new(2, 0x3d, 128, 64).unwrap();
+    dev.init(std::path::Path::new("/dev/gpiochip2"), 2);
+    for i in 0..64 {
+        let pe = dev.draw_pixel(64, i, true).unwrap();
+    }
     /*
         match args.cmd {
             Some(Command::Add { description }) => {
