@@ -11,9 +11,9 @@ use encoder_interface::setup_encoder;
 use front_display::lcd_setup;
 use na::Vector3;
 use sqlx::sqlite::SqlitePool;
+use ssd1306_driver::Driver;
 use state_server::*;
-use std::env;
-
+use std::{env, path::Path};
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     // The `<StateA>` is implied here. We don't need to add type annotations!
@@ -49,24 +49,27 @@ async fn main() -> anyhow::Result<()> {
     //let args = Args::from_args_safe()?;
     let pool = SqlitePool::connect(&env::var("DATABASE_URL")?).await?;
 
-    let dev = ssd1306_driver::Ssd1306Driver::new(2, 0x3d, 128, 64).unwrap();
-    dev.init(std::path::Path::new("/dev/gpiochip2"), 2);
-    for i in 0..64 {
-        let pe = dev.draw_pixel(64, i, true).unwrap();
-    }
-    /*
-        match args.cmd {
-            Some(Command::Add { description }) => {
-                println!("Adding new todo with description '{}'", &description);
-                let todo_id = add_todo(&pool, "Test".to_string(),"1".to_string(),"2".to_string()).await?;
-                println!("Added new todo with id {}", todo_id);
-            }
+    println!("Writing some pixels to screen...");
+    let mut drv = Driver::new(128, 64, Path::new("/dev/i2c-2"));
+    drv.init(Path::new("/dev/gpiochip2"), 3);
 
-            None => {
-                println!("Printing list of all todos");
-                list_todos(&pool).await?;
-            }
-        }
-    */
+    for y in 0..128 {
+        drv.draw_pixel(y, 0, true); //Store pixel at (x,y) location
+        drv.draw_pixel(0, y, true); //Store pixel at (x,y) location
+    }
+    drv.refresh(Path::new("/dev/i2c-2")); /*
+                                              match args.cmd {
+                                                  Some(Command::Add { description }) => {
+                                                      println!("Adding new todo with description '{}'", &description);
+                                                      let todo_id = add_todo(&pool, "Test".to_string(),"1".to_string(),"2".to_string()).await?;
+                                                      println!("Added new todo with id {}", todo_id);
+                                                  }
+
+                                                  None => {
+                                                      println!("Printing list of all todos");
+                                                      list_todos(&pool).await?;
+                                                  }
+                                              }
+                                          */
     Ok(())
 }
