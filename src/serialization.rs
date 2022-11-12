@@ -15,21 +15,22 @@ pub mod serde_helpers {
     //impl Context for ParseConfigError {}
     impl Error for ParseConfigError {}
 
+    #[derive(Debug)]
     pub struct TimedCoordinates {
         pub name: String,
         pub timestamp: u8,
-        pub vector: Vec<u32>,
-        pub rotation: Vec<u32>,
+        pub vector: Vec<i32>,
+        pub rotation: Vec<i32>,
     }
 
     #[derive(Serialize, Deserialize)]
     pub struct SerdeVector {
-        vectors: Vec<u32>,
+        vectors: Vec<i32>,
     }
 
     #[derive(Serialize, Deserialize)]
     pub struct SerdeRotations {
-        rotations: Vec<u32>,
+        rotations: Vec<i32>,
     }
 
     pub fn serialize_vector(v: SerdeVector) -> error_stack::Result<String, ParseConfigError> {

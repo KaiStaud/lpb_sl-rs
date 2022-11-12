@@ -3,6 +3,7 @@ mod cli;
 mod encoder_interface;
 mod front_display;
 mod inverse_kinematics;
+mod job_dispatcher;
 mod serialization;
 mod ssd1306_driver;
 mod state_server;

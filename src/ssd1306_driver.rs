@@ -99,19 +99,21 @@ impl Driver {
             .set_value(1)
             .expect("Error while setting final pin state");
         sleep(Duration::from_millis(10));
-
+        /*
         let mut msgs = [LinuxI2CMessage::write(&[
             0x00, 0xAE, 0xD5, 0x80, 0xA8, 0x3F, 0xD3, 0x00, 0x40, 0x8D, 0x14, 0xA1, 0xC0, 0xDA,
             0x12, 0x81, 0xcf, 0xd9, 0xf1, 0xdb, 0x40, 0xa4, 0xa6, 0x20, 0x00, 0xaf,
         ])
         .with_address(0x3d)];
         // Send the messages to the kernel to process
-        match self.bus.transfer(&mut msgs) {
-            Ok(rc) => println!("Successful transfer call: {} messages processed", rc),
-            Err(_e) => {
-                println!("Error reading/writing {}", _e);
-            }
-        }
+
+              match self.bus.transfer(&mut msgs) {
+                  Ok(rc) => println!("Successful transfer call: {} messages processed", rc),
+                  Err(_e) => {
+                      println!("Error reading/writing {}", _e);
+                  }
+              }
+        */
         std::result::Result::Ok(())
     }
 
@@ -130,15 +132,17 @@ impl Driver {
         values[2] = 0x10; //Set higher column start address for page addressing mode
         values[3] = 0x40; //Set display start line
 
+        /*
         let mut msgs = [LinuxI2CMessage::write(&values).with_address(0x3d)];
 
-        match self.bus.transfer(&mut msgs) {
-            Ok(rc) => println!(""),
-            Err(_e) => {
-                println!("Error reading/writing {}", _e);
-                return;
-            }
-        }
+              match self.bus.transfer(&mut msgs) {
+                  Ok(rc) => println!(""),
+                  Err(_e) => {
+                      println!("Error reading/writing {}", _e);
+                      return;
+                  }
+              }
+        */
         let mut chunk = 0;
         let mut pixels: [u8; 17] = [0; 17];
         pixels[0] = 0x40;
@@ -159,15 +163,17 @@ impl Driver {
             q -= 1;
 
             // Perform a block-transfer on i2c bus:
+            /*
             let mut data = [LinuxI2CMessage::write(&pixels).with_address(0x3d)];
 
-            match self.bus.transfer(&mut data) {
-                Ok(rc) => println!(""),
-                Err(_e) => {
-                    println!("Error reading/writing {}", _e);
-                    return;
-                }
-            }
+                        match self.bus.transfer(&mut data) {
+                            Ok(rc) => println!(""),
+                            Err(_e) => {
+                                println!("Error reading/writing {}", _e);
+                                return;
+                            }
+                        }
+            */
         }
     }
 }
