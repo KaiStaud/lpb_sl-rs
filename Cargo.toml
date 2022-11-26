@@ -5,6 +5,25 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[[bin]]
+name = "lpb-sl"
+path = "src/main.rs"
+
+[[bin]]
+name = "lpb-cli"
+path = "src/cli.rs"
+
+[feature]
+default = ["std"]
+std = ["int-enum-impl/std"]
+convert = ["int-enum-impl/convert"]
+
+[dependencies.lpb_lib]
+path = "src/lib"
+
+[dependencies.lpb_unsafe_lib]
+path = "src/unsafe_lib"
+
 [dependencies]
 nalgebra = "0.31.1"
 libm = "0.2.5"
@@ -24,3 +43,6 @@ gpio-cdev = {version = "0.5.1", features = ["async-tokio"]}
 i2cdev = "0.5.0"
 lcd = "0.4.1"
 lcd-pcf8574 = "0.2.0"
+iceoryx-rs = "0.1"
+int-enum = "0.5.0"
+int-enum-impl = "0.5"
