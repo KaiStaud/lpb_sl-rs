@@ -1,5 +1,5 @@
+extern crate lpb_unsafe_lib;
 extern crate nalgebra as na;
-mod cli;
 mod encoder_interface;
 mod front_display;
 mod inverse_kinematics;
@@ -10,11 +10,20 @@ mod state_server;
 
 use encoder_interface::setup_encoder;
 use front_display::lcd_setup;
+use lpb_unsafe_lib::*;
 use na::Vector3;
 use sqlx::sqlite::SqlitePool;
 use ssd1306_driver::Driver;
 use state_server::*;
 use std::{env, path::Path};
+
+use iceoryx_rs::Runtime;
+use iceoryx_rs::SubscriberBuilder;
+
+use std::error::Error;
+use std::thread;
+use std::time::Duration;
+
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     // The `<StateA>` is implied here. We don't need to add type annotations!
@@ -49,28 +58,36 @@ async fn main() -> anyhow::Result<()> {
     if let Err(report) = setup_encoder().await {}
     //let args = Args::from_args_safe()?;
     let pool = SqlitePool::connect(&env::var("DATABASE_URL")?).await?;
+    /*
+       println!("Writing some pixels to screen...");
+       let mut drv = Driver::new(128, 64, Path::new("/dev/i2c-2"));
+       drv.init(Path::new("/dev/gpiochip2"), 3);
 
-    println!("Writing some pixels to screen...");
-    let mut drv = Driver::new(128, 64, Path::new("/dev/i2c-2"));
-    drv.init(Path::new("/dev/gpiochip2"), 3);
+       for y in 0..128 {
+           drv.draw_pixel(y, 0, true); //Store pixel at (x,y) location
+           drv.draw_pixel(0, y, true); //Store pixel at (x,y) location
+       }
+       drv.refresh(Path::new("/dev/i2c-2"));
+    */
 
-    for y in 0..128 {
-        drv.draw_pixel(y, 0, true); //Store pixel at (x,y) location
-        drv.draw_pixel(0, y, true); //Store pixel at (x,y) location
+    Runtime::init("cli_receiver");
+
+    let (subscriber, sample_receive_token) =
+        SubscriberBuilder::<Counter>::new("lpb-sl", "cli", "transceiver")
+            .queue_capacity(5)
+            .create()?;
+
+    let sample_receiver = subscriber.get_sample_receiver(sample_receive_token);
+
+    loop {
+        if sample_receiver.has_data() {
+            while let Some(sample) = sample_receiver.take() {
+                println!("Receiving: {:?} {:?}", sample.mode, sample.action);
+            }
+        } else {
+            thread::sleep(Duration::from_millis(100));
+        }
     }
-    drv.refresh(Path::new("/dev/i2c-2")); /*
-                                              match args.cmd {
-                                                  Some(Command::Add { description }) => {
-                                                      println!("Adding new todo with description '{}'", &description);
-                                                      let todo_id = add_todo(&pool, "Test".to_string(),"1".to_string(),"2".to_string()).await?;
-                                                      println!("Added new todo with id {}", todo_id);
-                                                  }
 
-                                                  None => {
-                                                      println!("Printing list of all todos");
-                                                      list_todos(&pool).await?;
-                                                  }
-                                              }
-                                          */
     Ok(())
 }

@@ -2,7 +2,12 @@ export DATABASE_URL="sqlite:todos.db"
 $ sqlx db create
 $ sqlx migrate run
 cargo run -- add "todo description"
-cargo run
+## Start Roudi:
+find target -type f -wholename "*/iceoryx-install/bin/iox-roudi" -exec {} \;
+## Start SL Server in lpb_sl-rs/target/debug:
+./lpb-sl
+## Start CLI
+./lpb-cli -h
 
 # GPIO-Setup
 | Button | GPIO  | GPIO    | #Header | gpio-cdev        |      |
