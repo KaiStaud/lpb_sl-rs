@@ -1,27 +1,10 @@
-use anyhow::Ok;
-/*
-Self-build driver for SSD1306
-Implements traits from interface front_display
-
-Display content is written to framebuffer, which update-call sets pixels.
-
-todo: configurable reset-pin
-todo: expose interface to serial interface i2c / spi
-todo: init process
-todo: low-level pixel write
-todo: custom fonts
-todo: debug-trait: print framebuffer
-todo: print i2c-data
-optional: pub as self-contained library
-
-*/
-// Based on tutorial:https://www.instructables.com/Getting-Started-With-OLED-Displays/
 extern crate i2cdev;
 use gpio_cdev::{Chip, LineRequestFlags};
+
+use crate::ll_display::DotDisplay;
+use error_stack::{IntoReport, ResultExt};
 use i2cdev::core::{I2CMessage, I2CTransfer};
 use i2cdev::linux::{LinuxI2CBus, LinuxI2CMessage};
-
-use error_stack::{IntoReport, ResultExt};
 use std::{error::Error, fmt, path::Path, thread::sleep, time::Duration};
 #[derive(Debug)]
 pub struct Ssd1306DriverError;
@@ -33,6 +16,7 @@ impl fmt::Display for Ssd1306DriverError {
 }
 
 impl Error for Ssd1306DriverError {}
+
 pub struct Driver {
     width: i32,
     height: i32,
@@ -99,25 +83,25 @@ impl Driver {
             .set_value(1)
             .expect("Error while setting final pin state");
         sleep(Duration::from_millis(10));
-        /*
+
         let mut msgs = [LinuxI2CMessage::write(&[
             0x00, 0xAE, 0xD5, 0x80, 0xA8, 0x3F, 0xD3, 0x00, 0x40, 0x8D, 0x14, 0xA1, 0xC0, 0xDA,
             0x12, 0x81, 0xcf, 0xd9, 0xf1, 0xdb, 0x40, 0xa4, 0xa6, 0x20, 0x00, 0xaf,
         ])
         .with_address(0x3d)];
         // Send the messages to the kernel to process
-
-              match self.bus.transfer(&mut msgs) {
-                  Ok(rc) => println!("Successful transfer call: {} messages processed", rc),
-                  Err(_e) => {
-                      println!("Error reading/writing {}", _e);
-                  }
-              }
-        */
+        match self.bus.transfer(&mut msgs) {
+            Ok(rc) => println!("Successful transfer call: {} messages processed", rc),
+            Err(_e) => {
+                println!("Error reading/writing {}", _e);
+            }
+        }
         std::result::Result::Ok(())
     }
+}
 
-    pub fn draw_pixel(&mut self, x: i32, y: i32, _on: bool) {
+impl DotDisplay for Driver {
+    fn draw_pixel(&mut self, x: i32, y: i32, _on: bool) {
         if (x < 0) || (x >= self.width) || (y < 0) || (y >= self.height) {
         } else {
             self.frame_buffer[(x + (y / 8) * self.width) as usize] |= 1 << (y % 8);
@@ -125,24 +109,23 @@ impl Driver {
         }
     }
 
-    pub fn refresh(&mut self, _path: &std::path::Path) {
+    fn print_fb(&mut self) {}
+    fn refresh(&mut self, _path: &std::path::Path) {
         let mut values: [u8; 4] = [0; 4];
         values[0] = 0x00; //Command stream
         values[1] = 0x00; //Set lower column start address for page addressing mode
         values[2] = 0x10; //Set higher column start address for page addressing mode
         values[3] = 0x40; //Set display start line
 
-        /*
         let mut msgs = [LinuxI2CMessage::write(&values).with_address(0x3d)];
 
-              match self.bus.transfer(&mut msgs) {
-                  Ok(rc) => println!(""),
-                  Err(_e) => {
-                      println!("Error reading/writing {}", _e);
-                      return;
-                  }
-              }
-        */
+        match self.bus.transfer(&mut msgs) {
+            Ok(rc) => (),
+            Err(_e) => {
+                println!("Error reading/writing {}", _e);
+                return;
+            }
+        }
         let mut chunk = 0;
         let mut pixels: [u8; 17] = [0; 17];
         pixels[0] = 0x40;
@@ -157,23 +140,21 @@ impl Driver {
                 q += 1;
                 pixels[((q % 16) + 1) as usize] = self.frame_buffer[q as usize];
             }
-            println!("Chunk Nr.:{}={:?}", chunk, pixels);
+            //println!("Chunk Nr.:{}={:?}",chunk,pixels);
             // increment only above:
             q += 1;
             q -= 1;
 
             // Perform a block-transfer on i2c bus:
-            /*
             let mut data = [LinuxI2CMessage::write(&pixels).with_address(0x3d)];
 
-                        match self.bus.transfer(&mut data) {
-                            Ok(rc) => println!(""),
-                            Err(_e) => {
-                                println!("Error reading/writing {}", _e);
-                                return;
-                            }
-                        }
-            */
+            match self.bus.transfer(&mut data) {
+                Ok(rc) => (),
+                Err(_e) => {
+                    println!("Error reading/writing {}", _e);
+                    return;
+                }
+            }
         }
     }
 }

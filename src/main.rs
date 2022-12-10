@@ -1,19 +1,19 @@
 extern crate lpb_unsafe_lib;
 extern crate nalgebra as na;
+
 mod encoder_interface;
+mod font;
 mod front_display;
 mod inverse_kinematics;
 mod job_dispatcher;
+mod ll_display;
 mod serialization;
 mod ssd1306_driver;
 mod state_server;
-
 use encoder_interface::setup_encoder;
-use front_display::lcd_setup;
 use lpb_unsafe_lib::*;
 use na::Vector3;
 use sqlx::sqlite::SqlitePool;
-use ssd1306_driver::Driver;
 use state_server::*;
 use std::{env, path::Path};
 
@@ -54,7 +54,6 @@ async fn main() -> anyhow::Result<()> {
 
     let t2 = Vector3::new(5.0, 5.0, 5.0);
     let v = inverse_kinematics::inverse_kinematics::simple_ik(t2);
-    lcd_setup();
     if let Err(report) = setup_encoder().await {}
     //let args = Args::from_args_safe()?;
     let pool = SqlitePool::connect(&env::var("DATABASE_URL")?).await?;
