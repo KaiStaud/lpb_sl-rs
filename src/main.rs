@@ -1,6 +1,5 @@
 extern crate lpb_unsafe_lib;
 extern crate nalgebra as na;
-
 mod encoder_interface;
 mod font;
 mod front_display;
@@ -24,8 +23,20 @@ use std::error::Error;
 use std::thread;
 use std::time::Duration;
 
+extern "C" {
+    pub fn doubler(x: ::std::os::raw::c_int) -> ::std::os::raw::c_int;
+    pub fn create_shared_od();
+    pub fn access_shared_od();
+}
+
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
+    unsafe {
+        println!("{}", doubler(1));
+        //create_shared_od();
+        access_shared_od();
+    }
+
     // The `<StateA>` is implied here. We don't need to add type annotations!
     let in_state_a = StateMachine::new("Booting up...".into());
 

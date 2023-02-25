@@ -24,6 +24,9 @@ path = "src/lib"
 [dependencies.lpb_unsafe_lib]
 path = "src/unsafe_lib"
 
+[build-dependencies]
+cc = "1.0.50"
+
 [dependencies]
 nalgebra = "0.31.1"
 libm = "0.2.5"
