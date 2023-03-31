@@ -25,7 +25,7 @@ pub mod serde_helpers {
 
     #[derive(Serialize, Deserialize)]
     pub struct SerdeVector {
-        vectors: Vec<i32>,
+        pub vectors: Vec<i32>,
     }
 
     #[derive(Serialize, Deserialize)]
@@ -47,15 +47,17 @@ pub mod serde_helpers {
         Ok(j)
     }
 
-    pub fn deserialize_vector(data: &str) -> error_stack::Result<Vec<u32>, ParseConfigError> {
-        let p: Vec<u32> = serde_json::from_str(data)
+    pub fn deserialize_vector(data: &str) -> error_stack::Result<SerdeVector, ParseConfigError> {
+        let p = serde_json::from_str(data)
             .into_report()
             .change_context(ParseConfigError)?;
         Ok(p)
     }
 
-    pub fn deserialize_rotations(data: &str) -> error_stack::Result<Vec<u32>, ParseConfigError> {
-        let p: Vec<u32> = serde_json::from_str(data)
+    pub fn deserialize_rotations(
+        data: &str,
+    ) -> error_stack::Result<SerdeRotations, ParseConfigError> {
+        let p = serde_json::from_str(data)
             .into_report()
             .change_context(ParseConfigError)?;
         Ok(p)

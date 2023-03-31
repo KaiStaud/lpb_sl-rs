@@ -829,6 +829,7 @@ name = "lpb_sl-rs"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "cc",
  "clap 4.0.27",
  "env_logger",
  "error-stack",
@@ -843,7 +844,6 @@ dependencies = [
  "libm",
  "log",
  "lpb_lib",
- "lpb_unsafe_lib",
  "nalgebra",
  "ringbuffer",
  "serde",
@@ -851,16 +851,6 @@ dependencies = [
  "sqlx",
  "structopt",
  "tokio",
-]
-
-[[package]]
-name = "lpb_unsafe_lib"
-version = "0.0.1"
-dependencies = [
- "clap 4.0.27",
- "iceoryx-rs",
- "int-enum",
- "int-enum-impl",
 ]
 
 [[package]]
