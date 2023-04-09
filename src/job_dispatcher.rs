@@ -1,4 +1,3 @@
-use error_stack::{IntoReport, ResultExt};
 use nalgebra::Vector3;
 use ringbuffer::{AllocRingBuffer, RingBufferExt, RingBufferWrite};
 use std::{error::Error, fmt};
@@ -60,7 +59,7 @@ impl fmt::Display for DataRingHelperError {
 
 impl Error for DataRingHelperError {}
 
-struct RingManager {
+pub struct RingManager {
     r1: AllocRingBuffer<Vec<TimedCoordinates>>,
     r2: AllocRingBuffer<TimedCoordinates>,
     r3: AllocRingBuffer<(Vector3<i32>, Vector3<i32>)>,
@@ -68,7 +67,7 @@ struct RingManager {
     write_index: [i32; 3],
 }
 impl RingManager {
-    fn new() -> RingManager {
+    pub fn new() -> RingManager {
         let tr1: AllocRingBuffer<Vec<TimedCoordinates>> = AllocRingBuffer::with_capacity(4);
         let tr2: AllocRingBuffer<TimedCoordinates> = AllocRingBuffer::with_capacity(4);
         let tr3: AllocRingBuffer<(Vector3<i32>, Vector3<i32>)> = AllocRingBuffer::with_capacity(4);
@@ -159,11 +158,7 @@ impl RingManager {
                 let cv = v.clone();
                 //println!("{}->{:?}",read_pointer,cv);
                 // Are we overwriting unused data?
-                let dv = self.get_valid_buffer_ranger(
-                    1,
-                    read_pointer.try_into().unwrap(),
-                    requested_space.try_into().unwrap(),
-                );
+
                 for i in 0..cv.len() {
                     self.r2.push(cv[i].clone());
                     transferred_elements += 1;
@@ -192,7 +187,6 @@ impl RingManager {
         let remaining_space = self.get_remaining_slots(2);
         let mut read_pointer = self.translate_read_pointer(self.read_index[1]);
         let open_requests = self.get_open_requests(1);
-        let mut ix = -1;
         // While r3 has empty slots:
         while remaining_space > 0 && open_requests > transferred_elements {
             println!("{}/{}", transferred_elements, open_requests);
@@ -207,7 +201,7 @@ impl RingManager {
         transferred_elements
     }
 
-    fn set_job_from_ring3(&mut self) -> Option<(Vector3<i32>, Vector3<i32>)> {
+    pub fn set_job_from_ring3(&mut self) -> Option<(Vector3<i32>, Vector3<i32>)> {
         if self.read_index[2] < -10 {
             self.read_index[2] = -1;
         } else {
@@ -216,13 +210,13 @@ impl RingManager {
         self.r3.get(self.read_index[2].try_into().unwrap()).cloned()
     }
 
-    fn auto_refill_rings(&mut self) -> Result<(), DataRingError> {
+    pub fn auto_refill_rings(&mut self) -> Result<(), DataRingError> {
         _ = self.refill_ring2();
         _ = self.refill_ring3();
         Ok(())
     }
 
-    fn push_to_ring1(&mut self, i: Vec<TimedCoordinates>) -> i32 {
+    pub fn push_to_ring1(&mut self, i: Vec<TimedCoordinates>) -> i32 {
         self.r1.push(i);
         self.write_index[0] += 1;
         RING1_SIZE - self.write_index[0] // Todo: Should return get available space!

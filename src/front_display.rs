@@ -1,5 +1,3 @@
-use crate::font;
-use error_stack::{IntoReport, ResultExt};
 use std::{error::Error, fmt};
 #[derive(Debug)]
 
@@ -21,5 +19,5 @@ impl FrontDisplay {
 
     pub fn println() {}
 
-    fn print_char(c: char) {}
+    fn print_char(_c: char) {}
 }

@@ -1,13 +1,12 @@
-extern crate int_enum;
-extern crate iceoryx_rs;
 extern crate clap;
+extern crate iceoryx_rs;
+extern crate int_enum;
 
-use int_enum::IntEnum;
 use clap::ValueEnum;
-use iceoryx_rs::marker::ShmSend;
+use int_enum::IntEnum;
 
 #[repr(u32)]
-#[derive(Debug,Copy,Clone,PartialEq,Eq,PartialOrd,Ord,ValueEnum,IntEnum)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum, IntEnum)]
 pub enum DbAction {
     /// Add
     New = 110,
@@ -18,7 +17,7 @@ pub enum DbAction {
 }
 
 #[repr(u32)]
-#[derive(Debug,Copy,Clone,PartialEq,Eq,PartialOrd,Ord,ValueEnum,IntEnum)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum, IntEnum)]
 pub enum Mode {
     /// Teach some moves
     TorqueFree = 10,
@@ -27,4 +26,3 @@ pub enum Mode {
     /// Crawl slowly but steadily
     Slow = 12,
 }
-
