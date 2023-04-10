@@ -106,7 +106,7 @@ pub mod db_abstraction {
     use super::serde_helpers::*;
 
     pub fn connect_db() -> () {
-        todo!()
+        todo!("Replace with something like :let pool = SqlitePool::connect().await;")
     }
 
     pub async fn add_constellation(

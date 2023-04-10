@@ -1,7 +1,4 @@
 extern crate nalgebra as na;
-mod encoder_interface;
-mod font;
-mod front_display;
 mod inverse_kinematics;
 mod job_dispatcher;
 mod serialization;
@@ -9,6 +6,8 @@ mod state_server;
 use inverse_kinematics::inverse_kinematics::{coordinates_to_steps, simple_ik};
 use job_dispatcher::*;
 use na::Vector3;
+use serialization::db_abstraction::connect_db;
+use sqlx::SqlitePool;
 use std::sync::mpsc::{self};
 extern "C" {
     pub fn doubler(x: ::std::os::raw::c_int) -> ::std::os::raw::c_int;
@@ -18,6 +17,11 @@ extern "C" {
 
 use crate::serialization::serde_helpers::deserialize_vector;
 use clap::Parser;
+
+enum DataAccess {
+    Write,
+    Read,
+}
 
 fn tracker_thread(rx: std::sync::mpsc::Receiver<Vec<i32>>) {
     let res = rx.recv();
@@ -41,6 +45,17 @@ fn tracker_thread(rx: std::sync::mpsc::Receiver<Vec<i32>>) {
     let q = Vector3::from_vec(t);
     simple_ik(q);
     coordinates_to_steps(Vector3::new(0.0, 0.0, 0.0), q, 90);
+}
+
+async fn database_thread(
+    rx: std::sync::mpsc::Receiver<(TimedCoordinates, DataAccess)>,
+    tx: std::sync::mpsc::Sender<TimedCoordinates>,
+) {
+    connect_db();
+    // TODO: Replace
+    let pool = SqlitePool::connect("sqlite:todos.db").await;
+    // with connect_db!
+    // Wait for key
 }
 
 /// Start Control with config and vec-file
